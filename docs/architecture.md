@@ -152,8 +152,8 @@ What protects each API route at baseline. Gaps are marked; ✔ = fixed on `refac
 | `POST /api/shops/by/:userId`, `POST /api/auctions/by/:userId` | requireSignin, hasAuthorization, isSeller | |
 | `PUT/DELETE /api/shops/:shopId`, products by shop | requireSignin, isOwner | |
 | `PUT/DELETE /api/auctions/:auctionId` | requireSignin, auctionCtrl.isSeller | |
-| `POST /api/orders/:userId` (checkout) | requireSignin, stripeCustomer, decreaseQuantity | No hasAuthorization: the order is filed under the `:userId` in the URL, not the token's user |
-| `GET /api/orders/user/:userId` | requireSignin | **Any signed-in user can list anyone's orders** (D-08) |
+| `POST /api/orders/:userId` (checkout) | requireSignin, stripeCustomer, decreaseQuantity | No hasAuthorization: the order is filed under the `:userId` in the URL, not the token's user (D-08 ✔) |
+| `GET /api/orders/user/:userId` | requireSignin | **Any signed-in user can list anyone's orders** (D-08 ✔) |
 | `GET /api/orders/shop/:shopId`, order status/cancel/charge | requireSignin, isOwner | |
 | `GET /api/order/:orderId` | none | Any order's name, email, address readable by id (D-08 ✔) |
 | Socket `new bid` | none | Unauthenticated bids under any bidder id |

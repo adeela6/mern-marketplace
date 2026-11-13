@@ -9,13 +9,13 @@ import paymentCtrl from '../controllers/payment.controller'
 const router = express.Router()
 
 router.route('/api/orders/:userId')
-  .post(authCtrl.requireSignin, paymentCtrl.stripeCustomer, productCtrl.decreaseQuantity, orderCtrl.create)
+  .post(authCtrl.requireSignin, authCtrl.hasAuthorization, paymentCtrl.stripeCustomer, productCtrl.decreaseQuantity, orderCtrl.create)
 
 router.route('/api/orders/shop/:shopId')
   .get(authCtrl.requireSignin, shopCtrl.isOwner, orderCtrl.listByShop)
 
 router.route('/api/orders/user/:userId')
-  .get(authCtrl.requireSignin, orderCtrl.listByUser)
+  .get(authCtrl.requireSignin, authCtrl.hasAuthorization, orderCtrl.listByUser)
 
 router.route('/api/order/status_values')
   .get(orderCtrl.getStatusValues)

@@ -92,6 +92,19 @@ describe('POST /api/orders/:userId (checkout)', () => {
     expect(res.body.payment_id).toBe('cus_old')
   })
 
+  test("D-08: checking out as another user -> 403, Stripe not called", async () => {
+    const victim = await signedInUser()
+    await User.updateOne({ _id: victim.user._id }, { stripe_customer: 'cus_victim' })
+    const attacker = await signedInUser()
+    const res = await api().post(`/api/orders/${victim.user._id}`).set(bearer(attacker.token))
+      .send({ order: { products: [] }, token: 'tok_attacker' })
+
+    expect(res.status).toBe(403)
+    expect(res.body).toEqual({ error: 'User is not authorized' })
+    expect(s.customers.update).not.toHaveBeenCalled()
+    expect(await Order.countDocuments()).toBe(0)
+  })
+
   test('updating the customer fails -> 400 "Could not update charge details"', async () => {
     stripeReturns(s.customers.update, null, new Error('card declined'))
     const buyer = await signedInUser()

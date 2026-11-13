@@ -48,3 +48,19 @@ test('any other signed-in user -> 403', async () => {
   expect(res.status).toBe(403)
   expect(res.body).toEqual({ error: 'User is not authorized' })
 })
+
+describe('GET /api/orders/user/:userId (D-08)', () => {
+  test('buyer can list their own orders', async () => {
+    const { buyer, order } = await setup()
+    const res = await api().get(`/api/orders/user/${buyer.user._id}`).set(bearer(buyer.token))
+    expect(res.status).toBe(200)
+    expect(res.body.map(o => o._id)).toEqual([String(order._id)])
+  })
+
+  test("listing another user's orders -> 403", async () => {
+    const { buyer, stranger } = await setup()
+    const res = await api().get(`/api/orders/user/${buyer.user._id}`).set(bearer(stranger.token))
+    expect(res.status).toBe(403)
+    expect(res.body).toEqual({ error: 'User is not authorized' })
+  })
+})
