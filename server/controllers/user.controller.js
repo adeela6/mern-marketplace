@@ -4,41 +4,27 @@ import errorHandler from './../helpers/dbErrorHandler'
 import request from 'request'
 import config from './../../config/config'
 import stripe from 'stripe'
+import { asyncHandler, HttpError } from '../helpers/errors'
 
 const myStripe = stripe(config.stripe_test_secret_key)
 
-const create = async (req, res) => {
+const create = asyncHandler(async (req, res) => {
   const user = new User(req.body)
-  try {
-    await user.save()
-    return res.status(200).json({
-      message: "Successfully signed up!"
-    })
-  } catch (err) {
-    return res.status(400).json({
-      error: errorHandler.getErrorMessage(err)
-    })
-  }
-}
+  await user.save()
+  return res.status(200).json({
+    message: "Successfully signed up!"
+  })
+})
 
 /**
  * Load user and append to req.
  */
-const userByID = async (req, res, next, id) => {
-  try {
-    let user = await User.findById(id)
-    if (!user)
-      return res.status('400').json({
-        error: "User not found"
-      })
-    req.profile = user
-    next()
-  } catch (err) {
-    return res.status('400').json({
-      error: "Could not retrieve user"
-    })
-  }
-}
+const userByID = asyncHandler(async (req, res, next, id) => {
+  const user = await User.findById(id)
+  if (!user) throw new HttpError(400, "User not found")
+  req.profile = user
+  next()
+}, new HttpError(400, "Could not retrieve user"))
 
 const read = (req, res) => {
   req.profile.hashed_password = undefined
@@ -46,54 +32,31 @@ const read = (req, res) => {
   return res.json(req.profile)
 }
 
-const list = async (req, res) => {
-  try {
-    let users = await User.find().select('name email updated created')
-    res.json(users)
-  } catch (err) {
-    return res.status(400).json({
-      error: errorHandler.getErrorMessage(err)
-    })
-  }
-}
+const list = asyncHandler(async (req, res) => {
+  const users = await User.find().select('name email updated created')
+  res.json(users)
+})
 
-const update = async (req, res) => {
-  try {
-    let user = req.profile
-    user = extend(user, req.body)
-    user.updated = Date.now()
-    await user.save()
-    user.hashed_password = undefined
-    user.salt = undefined
-    res.json(user)
-  } catch (err) {
-    return res.status(400).json({
-      error: errorHandler.getErrorMessage(err)
-    })
-  }
-}
+const update = asyncHandler(async (req, res) => {
+  let user = req.profile
+  user = extend(user, req.body)
+  user.updated = Date.now()
+  await user.save()
+  user.hashed_password = undefined
+  user.salt = undefined
+  res.json(user)
+})
 
-const remove = async (req, res) => {
-  try {
-    let user = req.profile
-    let deletedUser = await user.remove()
-    deletedUser.hashed_password = undefined
-    deletedUser.salt = undefined
-    res.json(deletedUser)
-  } catch (err) {
-    return res.status(400).json({
-      error: errorHandler.getErrorMessage(err)
-    })
-  }
-}
+const remove = asyncHandler(async (req, res) => {
+  const deletedUser = await req.profile.remove()
+  deletedUser.hashed_password = undefined
+  deletedUser.salt = undefined
+  res.json(deletedUser)
+})
 
 const isSeller = (req, res, next) => {
   const isSeller = req.profile && req.profile.seller
-  if (!isSeller) {
-    return res.status('403').json({
-      error: "User is not a seller"
-    })
-  }
+  if (!isSeller) return next(new HttpError(403, "User is not a seller"))
   next()
 }
 
