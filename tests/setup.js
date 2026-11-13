@@ -2,6 +2,9 @@
 import mongoose from 'mongoose'
 import { MongoMemoryServer } from 'mongodb-memory-server'
 
+// config/config.js refuses to load without it (D-06). Runs before any test file imports config.
+process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-jwt-secret'
+
 // express.js compiles the webpack client bundle on import; tests only need the API.
 jest.mock('../server/devBundle', () => ({ compile: () => {} }))
 // client/auction/Bidding.js calls io() at import time (pulled in via SSR) and keeps reconnecting.
