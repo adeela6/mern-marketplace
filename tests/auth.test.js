@@ -59,3 +59,29 @@ describe('requireSignin / hasAuthorization', () => {
     expect(res.body).toEqual({ error: 'User is not authorized' })
   })
 })
+
+describe('password hashing (D-08)', () => {
+  const crypto = require('crypto')
+  const User = require('../server/models/user.model').default
+
+  test('new passwords are stored as scrypt with a random 16-byte salt', async () => {
+    const { email } = await createUser()
+    const u = await User.findOne({ email })
+    expect(u.hashed_password).toMatch(/^scrypt\$[0-9a-f]{128}$/)
+    expect(u.salt).toMatch(/^[0-9a-f]{32}$/)
+  })
+
+  test('a legacy SHA-1 account can still sign in and is upgraded to scrypt', async () => {
+    const salt = '123456789'
+    await User.collection.insertOne({
+      name: 'Old', email: 'old@test.com', salt, seller: false, created: new Date(),
+      hashed_password: crypto.createHmac('sha1', salt).update('oldpass123').digest('hex')
+    })
+    await api().post('/auth/signin').send({ email: 'old@test.com', password: 'wrongpass' }).expect(401)
+    await api().post('/auth/signin').send({ email: 'old@test.com', password: 'oldpass123' }).expect(200)
+
+    const u = await User.findOne({ email: 'old@test.com' })
+    expect(u.hashed_password).toMatch(/^scrypt\$/)
+    await api().post('/auth/signin').send({ email: 'old@test.com', password: 'oldpass123' }).expect(200)
+  })
+})

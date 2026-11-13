@@ -8,6 +8,10 @@ const signin = asyncHandler(async (req, res) => {
   const user = await User.findOne({ "email": req.body.email })
   if (!user) throw new HttpError(401, "User not found")
   if (!user.authenticate(req.body.password)) throw new HttpError(401, "Email and password don't match.")
+  if (user.isLegacyHash()) { // D-08: upgrade old SHA-1 hash now that we have the plain password
+    user.password = req.body.password
+    await user.save().catch(err => console.log('Password rehash failed', err))
+  }
 
   const token = jwt.sign({ _id: user._id }, config.jwtSecret)
   res.cookie("t", token, { expire: new Date() + 9999 })
