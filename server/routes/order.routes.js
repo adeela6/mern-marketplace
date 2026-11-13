@@ -30,7 +30,7 @@ router.route('/api/order/status/:shopId')
   .put(authCtrl.requireSignin, shopCtrl.isOwner, orderCtrl.update)
 
 router.route('/api/order/:orderId')
-  .get(orderCtrl.read)
+  .get(authCtrl.requireSignin, orderCtrl.isBuyerOrSeller, orderCtrl.read)
 
 router.param('userId', userCtrl.userByID)
 router.param('shopId', shopCtrl.shopByID)
