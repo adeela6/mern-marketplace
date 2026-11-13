@@ -6,7 +6,7 @@ import paymentCtrl from '../controllers/payment.controller'
 const router = express.Router()
 
 router.route('/api/users')
-  .get(userCtrl.list)
+  .get(authCtrl.requireSignin, userCtrl.list)
   .post(userCtrl.create)
 
 router.route('/api/users/:userId')

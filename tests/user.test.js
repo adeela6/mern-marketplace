@@ -43,9 +43,17 @@ describe('POST /api/users (sign up)', () => {
 })
 
 describe('GET /api/users', () => {
-  test('is public (D-08) and returns only _id, name, email, created, updated', async () => {
+  // D-08: was public at baseline; now requires sign-in
+  test('without a token -> 401', async () => {
     await createUser()
     const res = await api().get('/api/users')
+    expect(res.status).toBe(401)
+    expect(res.body).toEqual({ error: 'UnauthorizedError: No authorization token was found' })
+  })
+
+  test('signed in: returns only _id, name, email, created, updated', async () => {
+    const { token } = await signedInUser()
+    const res = await api().get('/api/users').set(bearer(token))
     expect(res.status).toBe(200)
     expect(res.body).toHaveLength(1)
     // `updated` is absent until the user is first updated
