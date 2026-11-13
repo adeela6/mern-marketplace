@@ -67,6 +67,11 @@ const stripe_auth = (req, res, next) => {
     json: true,
     body: {client_secret:config.stripe_test_secret_key,code:req.body.stripe, grant_type:'authorization_code'}
   }, (error, response, body) => {
+    if (error) {
+      return res.status(400).json({
+        error: "Could not connect Stripe account"
+      })
+    }
     //update user
     if(body.error){
       return res.status('400').json({
@@ -108,6 +113,10 @@ const stripeCustomer = (req, res, next) => {
               req.body.order.payment_id = customer.id
               next()
             })
+      }, (err) => {
+        return res.status(400).send({
+          error: "Could not update charge details"
+        })
       })
   }
 }
@@ -123,14 +132,18 @@ const createCharge = (req, res, next) => {
   }, {
     stripeAccount: req.profile.stripe_seller.stripe_user_id,
   }).then((token) => {
-      myStripe.charges.create({
+      return myStripe.charges.create({
         amount: req.body.amount * 100, //amount in cents
         currency: "usd",
         source: token.id,
       }, {
         stripeAccount: req.profile.stripe_seller.stripe_user_id,
-      }).then((charge) => {
-        next()
+      })
+  }).then((charge) => {
+      next()
+  }, (err) => {
+      return res.status(400).json({
+        error: "Could not process charge"
       })
   })
 }

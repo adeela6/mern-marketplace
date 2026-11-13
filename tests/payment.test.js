@@ -143,3 +143,56 @@ describe('PUT /api/order/:orderId/charge/:userId/:shopId (seller charges an orde
     expect(s.tokens.create).not.toHaveBeenCalled()
   })
 })
+
+// BUG-3: failed Stripe calls were never caught, so the request hung (or, for OAuth, the server crashed).
+describe('BUG-3: Stripe failures return 400 instead of hanging', () => {
+  test('charge fails -> 400 "Could not process charge", order status unchanged', async () => {
+    stripeReturns(s.tokens.create, { id: 'tok_x' })
+    stripeReturns(s.charges.create, null, new Error('Your card was declined.'))
+    const seller = await signedInUser()
+    await User.updateOne({ _id: seller.user._id }, { stripe_seller: { stripe_user_id: 'acct_1' } })
+    const shop = await Shop.create({ name: 'S', owner: seller.user._id })
+    const order = await Order.create({
+      products: [{ product: new mongoose.Types.ObjectId(), quantity: 1, shop: shop._id }],
+      customer_name: 'Buyer', customer_email: 'b@test.com',
+      delivery_address: { street: '1 St', city: 'C', zipcode: '1', country: 'X' },
+      payment_id: 'cus_1'
+    })
+    const res = await api()
+      .put(`/api/order/${order._id}/charge/${seller.user._id}/${shop._id}`)
+      .set(bearer(seller.token))
+      .send({ cartItemId: order.products[0]._id, status: 'Processing', amount: 12.5 })
+
+    expect(res.status).toBe(400)
+    expect(res.body).toEqual({ error: 'Could not process charge' })
+    expect((await Order.findById(order._id)).products[0].status).toBe('Not processed')
+  })
+
+  test('creating the Stripe customer fails -> 400, no order, stock unchanged', async () => {
+    stripeReturns(s.customers.create, null, new Error('Invalid token'))
+    const buyer = await signedInUser()
+    const shop = await Shop.create({ name: 'S', owner: buyer.user._id })
+    const product = await Product.create({ name: 'P', quantity: 10, price: 5, shop: shop._id })
+    const res = await api().post(`/api/orders/${buyer.user._id}`).set(bearer(buyer.token)).send({
+      token: 'tok_bad',
+      order: {
+        products: [{ product: { _id: product._id }, quantity: 2, shop: shop._id }],
+        customer_name: 'Buyer', customer_email: 'b@test.com',
+        delivery_address: { street: '1 St', city: 'C', zipcode: '1', country: 'X' }
+      }
+    })
+
+    expect(res.status).toBe(400)
+    expect(res.body).toEqual({ error: 'Could not update charge details' })
+    expect(await Order.countDocuments()).toBe(0)
+    expect((await Product.findById(product._id)).quantity).toBe(10)
+  })
+
+  test('Stripe OAuth unreachable -> 400 "Could not connect Stripe account"', async () => {
+    request.mockImplementation((opts, cb) => cb(new Error('ECONNRESET')))
+    const { token, user } = await signedInUser()
+    const res = await api().put(`/api/stripe_auth/${user._id}`).set(bearer(token)).send({ stripe: 'code' })
+    expect(res.status).toBe(400)
+    expect(res.body).toEqual({ error: 'Could not connect Stripe account' })
+  })
+})
