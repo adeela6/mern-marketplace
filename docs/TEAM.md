@@ -11,7 +11,7 @@ Each member owned one area of the code through all four project phases and wrote
 | **Name** | Subaina Monib | Zainab Khalil | Adeela Nasir |
 | **Area** | Backend core: config, server entry, Express setup, auth and user modules, Stripe payments | Domain modules: shops, products, orders, auctions, live bidding | Client: everything in `client/` |
 | **Branch / PR** | `refactor/backend-core`, PR #2 | `refactor/domain`, PR #4 | `refactor/client` |
-| **Commits** | 22 (13 Nov) | 23 (16 Nov) | 14 (27–28 Nov) |
+| **Commits** | 22 (13 Nov) | 23 (16 Nov) | 15 (27–28 Nov) |
 | **Shared duty** | Test setup: Jest, supertest, in-memory MongoDB, shared helpers | Metrics: jscpd, Plato, madge and ESLint at baseline and final, comparison tables | Final report and presentation slides |
 | **Report section** | `docs/architecture.md` (architecture and changes; defect evidence to be added) | `docs/report-member-b.md` | `docs/report-member-c.md` |
 
