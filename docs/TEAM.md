@@ -1,8 +1,6 @@
 # Task distribution
 
-Software Evolution & Re-Engineering, Fall 2026. Re-engineering of [shamahoque/mern-marketplace](https://github.com/shamahoque/mern-marketplace) (`second-edition` branch, commit `bf3fc45`, tagged `baseline` in this fork).
-
-Each member owned one area of the code through all four project phases and wrote that area's report section. Each member also took one shared duty that served the whole team.
+For the-engineering of [shamahoque/mern-marketplace](https://github.com/shamahoque/mern-marketplace) (`second-edition` branch, commit `bf3fc45`, tagged `baseline` in this fork), each member owned one area of the code through all four project phases and wrote that area's report section. Each member also took one shared duty that served the whole team.
 
 ## Summary
 
