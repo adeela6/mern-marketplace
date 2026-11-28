@@ -7,7 +7,7 @@ import Grid from '@material-ui/core/Grid'
 import Divider from '@material-ui/core/Divider'
 import {makeStyles} from '@material-ui/core/styles'
 import {read} from './api-order.js'
-import auth from './../auth/auth-helper'
+import {useAuth} from './../auth/AuthContext'
 import {Link} from 'react-router-dom'
 
 const useStyles = makeStyles(theme => ({
@@ -77,12 +77,12 @@ const useStyles = makeStyles(theme => ({
     float: 'right',
     marginRight: '40px',
     fontSize: '1.5em',
-    color: 'rgb(72, 175, 148)'
+    color: theme.palette.marketplace.amount
   },
   itemShop: {
     display: 'block',
     fontSize: '1em',
-    color: '#78948f'
+    color: theme.palette.marketplace.shopName
   },
   checkout: {
     float: 'right',
@@ -90,7 +90,7 @@ const useStyles = makeStyles(theme => ({
   },
   total: {
     fontSize: '1.2em',
-    color: 'rgb(53, 97, 85)',
+    color: theme.palette.marketplace.total,
     marginRight: '16px',
     fontWeight: '600',
     verticalAlign: 'bottom'
@@ -100,11 +100,11 @@ const useStyles = makeStyles(theme => ({
 export default function Order({match}) {
   const classes = useStyles()
   const [order, setOrder] = useState({products:[], delivery_address:{}})
+  const {jwt} = useAuth()
 
   useEffect(() => {
     const abortController = new AbortController()
     const signal = abortController.signal
-    const jwt = auth.isAuthenticated()
     read({
       orderId: match.params.orderId
     }, {t: jwt.token}, signal).then((data) => {

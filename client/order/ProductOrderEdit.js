@@ -1,6 +1,6 @@
 import React, {useState, useEffect} from 'react'
 import PropTypes from 'prop-types'
-import {makeStyles} from '@material-ui/core/styles'
+import {makeStyles, useTheme} from '@material-ui/core/styles'
 import List from '@material-ui/core/List'
 import ListItem from '@material-ui/core/ListItem'
 import ListItemText from '@material-ui/core/ListItemText'
@@ -8,7 +8,7 @@ import Typography from '@material-ui/core/Typography'
 import MenuItem from '@material-ui/core/MenuItem'
 import TextField from '@material-ui/core/TextField'
 import Divider from '@material-ui/core/Divider'
-import auth from './../auth/auth-helper'
+import {useAuth} from './../auth/AuthContext'
 import {getStatusValues, update, cancelProduct, processCharge} from './api-order.js'
 
 const useStyles = makeStyles(theme => ({
@@ -42,12 +42,13 @@ const useStyles = makeStyles(theme => ({
 }))
 export default function ProductOrderEdit (props){
   const classes = useStyles()
+  const theme = useTheme()
   const [values, setValues] = useState({
       open: 0,
       statusValues: [],
       error: ''
   })
-  const jwt = auth.isAuthenticated()
+  const {jwt} = useAuth()
   useEffect(() => {
     const abortController = new AbortController()
     const signal = abortController.signal
@@ -149,7 +150,7 @@ export default function ProductOrderEdit (props){
       <Typography component="span" color="error" className={classes.statusMessage}>
         {values.error}
       </Typography>
-      <List disablePadding style={{backgroundColor:'#f8f8f8'}}>
+      <List disablePadding style={{backgroundColor: theme.palette.marketplace.panelBackground}}>
         {props.order.products.map((item, index) => {
           return <span key={index}>
                   { item.shop == props.shopId &&

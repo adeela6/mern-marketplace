@@ -5,38 +5,23 @@ import CardContent from '@material-ui/core/CardContent'
 import Button from '@material-ui/core/Button'
 import TextField from '@material-ui/core/TextField'
 import Typography from '@material-ui/core/Typography'
-import Icon from '@material-ui/core/Icon'
 import FormControlLabel from '@material-ui/core/FormControlLabel'
 import Switch from '@material-ui/core/Switch'
 import { makeStyles } from '@material-ui/core/styles'
-import auth from './../auth/auth-helper'
+import {submitButton, textField, formCard} from './../styles/form-styles'
+import {useAuth} from './../auth/AuthContext'
 import {read, update} from './api-user.js'
 import {Redirect} from 'react-router-dom'
+import FormError from './../components/FormError'
 
 const useStyles = makeStyles(theme => ({
-  card: {
-    maxWidth: 600,
-    margin: 'auto',
-    textAlign: 'center',
-    marginTop: theme.spacing(5),
-    paddingBottom: theme.spacing(2)
-  },
+  card: formCard(theme),
   title: {
     margin: theme.spacing(2),
     color: theme.palette.protectedTitle
   },
-  error: {
-    verticalAlign: 'middle'
-  },
-  textField: {
-    marginLeft: theme.spacing(1),
-    marginRight: theme.spacing(1),
-    width: 300
-  },
-  submit: {
-    margin: 'auto',
-    marginBottom: theme.spacing(2)
-  },
+  textField: textField(theme, 300),
+  submit: submitButton(theme),
   subheading: {
     marginTop: theme.spacing(2),
     color: theme.palette.openTitle
@@ -53,7 +38,7 @@ export default function EditProfile({ match }) {
       redirectToProfile: false,
       error: ''
   })
-  const jwt = auth.isAuthenticated()
+  const {jwt, updateUser} = useAuth()
   useEffect(() => {
     const abortController = new AbortController()
     const signal = abortController.signal
@@ -88,7 +73,7 @@ export default function EditProfile({ match }) {
       if (data && data.error) {
         setValues({...values, error: data.error})
       } else {
-        auth.updateUser(data, ()=>{
+        updateUser(data, ()=>{
           setValues({...values, userId: data._id, redirectToProfile: true})
         })
       }
@@ -127,12 +112,7 @@ export default function EditProfile({ match }) {
               />}
             label={values.seller? 'Active' : 'Inactive'}
           />
-          <br/> {
-            values.error && (<Typography component="p" color="error">
-              <Icon color="error" className={classes.error}>error</Icon>
-              {values.error}
-            </Typography>)
-          }
+          <br/> {values.error && <FormError message={values.error}/>}
         </CardContent>
         <CardActions>
           <Button color="primary" variant="contained" onClick={clickSubmit} className={classes.submit}>Submit</Button>

@@ -1,5 +1,5 @@
 import React, {useState} from 'react'
-import auth from './../auth/auth-helper'
+import {useAuth} from './../auth/AuthContext'
 import Card from '@material-ui/core/Card'
 import CardContent from '@material-ui/core/CardContent'
 import CardMedia from '@material-ui/core/CardMedia'
@@ -38,7 +38,7 @@ const useStyles = makeStyles(theme => ({
     marginBottom: '5px'
   },
   subheading: {
-    color: 'rgba(88, 114, 128, 0.67)',
+    color: theme.palette.marketplace.subheadingLight,
     padding: '8px 10px 0',
     cursor: 'pointer',
     display: 'inline-block'
@@ -65,7 +65,7 @@ const useStyles = makeStyles(theme => ({
     float: 'right',
     marginRight: '40px',
     fontSize: '1.5em',
-    color: 'rgb(72, 175, 148)'
+    color: theme.palette.marketplace.amount
   },
   checkout: {
     float: 'right',
@@ -73,7 +73,7 @@ const useStyles = makeStyles(theme => ({
   },
   total: {
     fontSize: '1.2em',
-    color: 'rgb(53, 97, 85)',
+    color: theme.palette.marketplace.total,
     marginRight: '16px',
     fontWeight: '600',
     verticalAlign: 'bottom'
@@ -84,7 +84,7 @@ const useStyles = makeStyles(theme => ({
   itemShop: {
     display: 'block',
     fontSize: '0.90em',
-    color: '#78948f'
+    color: theme.palette.marketplace.shopName
   },
   removeButton: {
     fontSize: '0.8em'
@@ -93,6 +93,7 @@ const useStyles = makeStyles(theme => ({
 
 export default function CartItems (props) {
   const classes = useStyles()
+  const {jwt} = useAuth()
   const [cartItems, setCartItems] = useState(cart.getCart())
 
   const handleChange = index => event => {
@@ -167,7 +168,7 @@ export default function CartItems (props) {
         }
         <div className={classes.checkout}>
           <span className={classes.total}>Total: ${getTotal()}</span>
-          {!props.checkout && (auth.isAuthenticated()?
+          {!props.checkout && (jwt?
             <Button color="secondary" variant="contained" onClick={openCheckout}>Checkout</Button>
             :
             <Link to="/signin">

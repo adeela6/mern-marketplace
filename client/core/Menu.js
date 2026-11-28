@@ -5,25 +5,21 @@ import Typography from '@material-ui/core/Typography'
 import IconButton from '@material-ui/core/IconButton'
 import HomeIcon from '@material-ui/icons/Home'
 import Button from '@material-ui/core/Button'
-import auth from './../auth/auth-helper'
+import {useAuth} from './../auth/AuthContext'
 import {Link, withRouter} from 'react-router-dom'
 import CartIcon from '@material-ui/icons/ShoppingCart'
 import Badge from '@material-ui/core/Badge'
 import cart from './../cart/cart-helper'
+import {useTheme} from '@material-ui/core/styles'
 
-const isActive = (history, path) => {
-  if (history.location.pathname == path)
-    return {color: '#bef67a'}
-  else
-    return {color: '#ffffff'}
-}
-const isPartActive = (history, path) => {
-  if (history.location.pathname.includes(path))
-    return {color: '#bef67a'}
-  else
-    return {color: '#ffffff'}
-}
-const Menu = withRouter(({history}) => (
+const Menu = withRouter(({history}) => {
+  const {jwt, signout} = useAuth()
+  // Link colours come from the theme (D-13); one rule now covers both checks.
+  const {navigation} = useTheme().palette
+  const linkColor = active => ({color: active ? navigation.active : navigation.inactive})
+  const isActive = (history, path) => linkColor(history.location.pathname == path)
+  const isPartActive = (history, path) => linkColor(history.location.pathname.includes(path))
+  return (
   <AppBar position="static">
     <Toolbar>
       <Typography variant="h6" color="inherit">
@@ -52,7 +48,7 @@ const Menu = withRouter(({history}) => (
       </div>
       <div style={{'position':'absolute', 'right': '10px'}}><span style={{'float': 'right'}}>
       {
-        !auth.isAuthenticated() && (<span>
+        !jwt && (<span>
           <Link to="/signup">
             <Button style={isActive(history, "/signup")}>Sign up
             </Button>
@@ -64,23 +60,24 @@ const Menu = withRouter(({history}) => (
         </span>)
       }
       {
-        auth.isAuthenticated() && (<span>
-          {auth.isAuthenticated().user.seller && (<>
+        jwt && (<span>
+          {jwt.user.seller && (<>
             <Link to="/seller/shops"><Button style={isPartActive(history, "/seller/")}>My Shops</Button></Link>
             <Link to="/myauctions"><Button style={isPartActive(history, "/myauctions")}>My Auctions</Button></Link>
             </>
           )}
-          <Link to={"/user/" + auth.isAuthenticated().user._id}>
-            <Button style={isActive(history, "/user/" + auth.isAuthenticated().user._id)}>My Profile</Button>
+          <Link to={"/user/" + jwt.user._id}>
+            <Button style={isActive(history, "/user/" + jwt.user._id)}>My Profile</Button>
           </Link>
           <Button color="inherit" onClick={() => {
-              auth.clearJWT(() => history.push('/'))
+              signout(() => history.push('/'))
             }}>Sign out</Button>
         </span>)
       }
       </span></div>
     </Toolbar>
   </AppBar>
-))
+  )
+})
 
 export default Menu

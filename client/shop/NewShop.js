@@ -1,72 +1,43 @@
-import React, {useState} from 'react'
+import React from 'react'
 import Card from '@material-ui/core/Card'
 import CardActions from '@material-ui/core/CardActions'
 import CardContent from '@material-ui/core/CardContent'
 import Button from '@material-ui/core/Button'
-import FileUpload from '@material-ui/icons/AddPhotoAlternate'
-import auth from './../auth/auth-helper'
+import {useAuth} from './../auth/AuthContext'
 import TextField from '@material-ui/core/TextField'
 import Typography from '@material-ui/core/Typography'
-import Icon from '@material-ui/core/Icon'
 import { makeStyles } from '@material-ui/core/styles'
+import {submitButton, textField, formCard} from './../styles/form-styles'
+import {useFormValues, toFormData} from './../lib/form'
+import ImageUpload from './../components/ImageUpload'
+import FormError from './../components/FormError'
 import {create} from './api-shop.js'
 import {Link, Redirect} from 'react-router-dom'
 
 const useStyles = makeStyles(theme => ({
-  card: {
-    maxWidth: 600,
-    margin: 'auto',
-    textAlign: 'center',
-    marginTop: theme.spacing(5),
-    paddingBottom: theme.spacing(2)
-  },
-  error: {
-    verticalAlign: 'middle'
-  },
+  card: formCard(theme),
   title: {
     marginTop: theme.spacing(2),
     color: theme.palette.openTitle,
     fontSize: '1em'
   },
-  textField: {
-    marginLeft: theme.spacing(1),
-    marginRight: theme.spacing(1),
-    width: 300
-  },
-  submit: {
-    margin: 'auto',
-    marginBottom: theme.spacing(2)
-  },
-  input: {
-    display: 'none'
-  },
-  filename:{
-    marginLeft:'10px'
-  }
+  textField: textField(theme, 300),
+  submit: submitButton(theme)
 }))
 
 export default function NewShop() {
   const classes = useStyles()
-  const [values, setValues] = useState({
+  const [values, setValues, handleChange] = useFormValues({
       name: '',
       description: '',
       image: '',
       redirect: false,
       error: ''
   })
-  const jwt = auth.isAuthenticated()
+  const {jwt} = useAuth()
 
-  const handleChange = name => event => {
-    const value = name === 'image'
-      ? event.target.files[0]
-      : event.target.value
-    setValues({...values, [name]: value })
-  }
   const clickSubmit = () => {
-    let shopData = new FormData()
-    values.name && shopData.append('name', values.name)
-    values.description && shopData.append('description', values.description)
-    values.image && shopData.append('image', values.image)
+    const shopData = toFormData(values, ['name', 'description', 'image'])
     create({
       userId: jwt.user._id
     }, {
@@ -90,13 +61,7 @@ export default function NewShop() {
             New Shop
           </Typography>
           <br/>
-          <input accept="image/*" onChange={handleChange('image')} className={classes.input} id="icon-button-file" type="file" />
-          <label htmlFor="icon-button-file">
-            <Button variant="contained" color="secondary" component="span">
-              Upload Logo
-              <FileUpload/>
-            </Button>
-          </label> <span className={classes.filename}>{values.image ? values.image.name : ''}</span><br/>
+          <ImageUpload label="Upload Logo" color="secondary" file={values.image} onChange={handleChange('image')}/>
           <TextField id="name" label="Name" className={classes.textField} value={values.name} onChange={handleChange('name')} margin="normal"/><br/>
           <TextField
             id="multiline-flexible"
@@ -107,11 +72,7 @@ export default function NewShop() {
             onChange={handleChange('description')}
             className={classes.textField}
             margin="normal"
-          /><br/> {
-            values.error && (<Typography component="p" color="error">
-              <Icon color="error" className={classes.error}>error</Icon>
-              {values.error}</Typography>)
-          }
+          /><br/> {values.error && <FormError message={values.error}/>}
         </CardContent>
         <CardActions>
           <Button color="primary" variant="contained" onClick={clickSubmit} className={classes.submit}>Submit</Button>
